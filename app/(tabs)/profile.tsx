@@ -35,7 +35,6 @@ const Page = () => {
   const [membershipTier, setMembershipTier] = useState("");
   const [propertyInformation, setPropertyInformation] = useState("");
   const [paymentInformation, setPaymentInformation] = useState("");
-  const [fullName, setFullName] = useState("");
   const [nationality, setNationality] = useState("");
   const [id, setId] = useState("");
   const [employmentPassDetails, setEmploymentPassDetails] = useState("");
@@ -103,7 +102,6 @@ const Page = () => {
       membershipTier,
       propertyInformation,
       paymentInformation,
-      fullName,
       nationality,
       id,
       employmentPassDetails,
@@ -129,7 +127,6 @@ const Page = () => {
       setMembershipTier(previousState.membershipTier);
       setPropertyInformation(previousState.propertyInformation);
       setPaymentInformation(previousState.paymentInformation);
-      setFullName(previousState.fullName);
       setNationality(previousState.nationality);
       setId(previousState.id);
       setEmploymentPassDetails(previousState.employmentPassDetails);
@@ -169,7 +166,6 @@ const Page = () => {
           membershipTier,
           propertyInformation,
           paymentInformation,
-          fullName,
           nationality,
           id,
           employmentPassDetails,
@@ -318,14 +314,6 @@ const Page = () => {
                   value={paymentInformation}
                   onChangeText={setPaymentInformation}
                   placeholder="Payment Information"
-                  style={styles.input}
-                />
-
-                <Text style={styles.label}>Full Name</Text>
-                <TextInput
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Full Name"
                   style={styles.input}
                 />
 
