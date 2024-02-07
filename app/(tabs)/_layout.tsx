@@ -33,7 +33,7 @@ const Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="inbox"
+        name="messages"
         options={{
           tabBarLabel: "Messages",
           tabBarIcon: ({ size, color }) => (

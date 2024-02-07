@@ -125,6 +125,8 @@ const Page = () => {
     }
   };
 
+
+
   return (
     <View style={styles.container}>
       {!pendingVerification && (
@@ -157,8 +159,6 @@ const Page = () => {
           ) : null}
 
           <TextButton onPress={onContinue} title="Continue" />
-
-          {/** TODO: Add Sign up / Log in button based on email address exists */}
 
           <View style={styles.seperatorView}>
             <View

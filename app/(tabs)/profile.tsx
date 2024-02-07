@@ -8,16 +8,17 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Modal,
+  Pressable,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { defaultStyles } from "@/constants/Styles";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
-import { Link } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import TextButton from "@/components/TextButton";
+import { Picker } from "@react-native-picker/picker";
 
 const Page = () => {
   const { signOut, isSignedIn } = useAuth();
@@ -26,24 +27,46 @@ const Page = () => {
   const [lastName, setLastName] = useState(user?.lastName);
   const [edit, setEdit] = useState(false);
 
+  const getDefaultDOB = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 18);
+    return date;
+  };
+
+  const getDateFromString = (
+    dateString: string | unknown,
+    defaultDate: Date = new Date()
+  ) => {
+    if (!dateString || typeof dateString !== "string") {
+      return defaultDate;
+    }
+    const dateSplit = dateString.split("/");
+    return new Date(
+      parseInt(dateSplit[2]),
+      parseInt(dateSplit[1]) - 1,
+      parseInt(dateSplit[0])
+    );
+  };
+
   // Additional state variables for the requested information
   const [membershipStart, setMembershipStart] = useState<Date>(new Date());
   const [membershipExpiry, setMembershipExpiry] = useState<Date>(new Date());
+  const [dateOfBirth, setDateOfBirth] = useState<Date>(getDefaultDOB());
   const [propertyAddress, setPropertyAddress] = useState("");
   const [bookingFee, setBookingFee] = useState("");
   const [securityDeposit, setSecurityDeposit] = useState("");
   const [membershipTier, setMembershipTier] = useState("");
-  const [propertyInformation, setPropertyInformation] = useState("");
   const [paymentInformation, setPaymentInformation] = useState("");
   const [nationality, setNationality] = useState("");
   const [id, setId] = useState("");
   const [employmentPassDetails, setEmploymentPassDetails] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState("");
   const [race, setRace] = useState("");
   const [religion, setReligion] = useState("");
   const [occupation, setOccupation] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+
+  const [isGenderModalVisible, setIsGenderModalVisible] = useState(false);
 
   // Load user data on mount
   useEffect(() => {
@@ -53,6 +76,34 @@ const Page = () => {
 
     setFirstName(user.firstName);
     setLastName(user.lastName);
+    setFirstName(user.firstName);
+    setLastName(user.lastName);
+    setMembershipStart(
+      getDateFromString(user?.unsafeMetadata?.membershipStart)
+    );
+    setMembershipExpiry(
+      getDateFromString(user?.unsafeMetadata?.membershipExpiry)
+    );
+    setPropertyAddress((user?.unsafeMetadata?.propertyAddress || "") as string);
+    setBookingFee((user?.unsafeMetadata?.bookingFee?.toString() || "0") as string);
+    setSecurityDeposit((user?.unsafeMetadata?.securityDeposit?.toString() || "0") as string);
+    setMembershipTier((user?.unsafeMetadata?.membershipTier || "") as string);
+    setPaymentInformation(
+      (user?.unsafeMetadata?.paymentInformation || "") as string
+    );
+    setNationality((user?.unsafeMetadata?.nationality || "") as string);
+    setId((user?.unsafeMetadata?.id || "") as string);
+    setEmploymentPassDetails(
+      (user?.unsafeMetadata?.employmentPassDetails || "") as string
+    );
+    setDateOfBirth(
+      getDateFromString(user?.unsafeMetadata?.dateOfBirth, getDefaultDOB())
+    );
+    setGender((user?.unsafeMetadata?.gender || "Male") as string);
+    setRace((user?.unsafeMetadata?.race || "") as string);
+    setReligion((user?.unsafeMetadata?.religion || "") as string);
+    setOccupation((user?.unsafeMetadata?.occupation || "") as string);
+    setMobileNumber((user?.unsafeMetadata?.mobileNumber || "") as string);
   }, [user]);
 
   // Update Clerk user data
@@ -100,7 +151,6 @@ const Page = () => {
       bookingFee,
       securityDeposit,
       membershipTier,
-      propertyInformation,
       paymentInformation,
       nationality,
       id,
@@ -125,7 +175,6 @@ const Page = () => {
       setBookingFee(previousState.bookingFee);
       setSecurityDeposit(previousState.securityDeposit);
       setMembershipTier(previousState.membershipTier);
-      setPropertyInformation(previousState.propertyInformation);
       setPaymentInformation(previousState.paymentInformation);
       setNationality(previousState.nationality);
       setId(previousState.id);
@@ -158,18 +207,19 @@ const Page = () => {
         unsafeMetadata: {
           firstName,
           lastName,
-          membershipStart,
-          membershipExpiry,
+          membershipStart: membershipStart.toLocaleString("en-GB").slice(0, 10), // date
+          membershipExpiry: membershipExpiry
+            .toLocaleString("en-GB")
+            .slice(0, 10), // date
+          dateOfBirth: dateOfBirth.toLocaleString("en-GB").slice(0, 10), // date
           propertyAddress,
-          bookingFee,
-          securityDeposit,
+          bookingFee: parseInt(bookingFee),
+          securityDeposit: parseInt(securityDeposit),
           membershipTier,
-          propertyInformation,
           paymentInformation,
           nationality,
           id,
           employmentPassDetails,
-          dateOfBirth,
           gender,
           race,
           religion,
@@ -178,10 +228,11 @@ const Page = () => {
         },
       });
     } catch (error) {
+      console.log(error)
+
     } finally {
       setEdit(false);
     }
-
   };
 
   return (
@@ -244,9 +295,7 @@ const Page = () => {
                 style={styles.editColumn}
                 contentContainerStyle={styles.scrollViewContent}
               >
-                <View
-                  style={styles.dateRow}
-                >
+                <View style={styles.dateRow}>
                   <Text style={styles.label}>Membership Start</Text>
                   <DateTimePicker
                     value={membershipStart}
@@ -278,7 +327,7 @@ const Page = () => {
 
                 <Text style={styles.label}>Booking Fee</Text>
                 <TextInput
-                  value={bookingFee}
+                  value={(bookingFee as string)}
                   keyboardType="numeric"
                   onChangeText={setBookingFee}
                   placeholder="Booking Fee"
@@ -287,7 +336,7 @@ const Page = () => {
 
                 <Text style={styles.label}>Security Deposit</Text>
                 <TextInput
-                  value={securityDeposit}
+                  value={(securityDeposit as string)}
                   onChangeText={setSecurityDeposit}
                   placeholder="Security Deposit"
                   style={styles.input}
@@ -298,14 +347,6 @@ const Page = () => {
                   value={membershipTier}
                   onChangeText={setMembershipTier}
                   placeholder="Membership Tier"
-                  style={styles.input}
-                />
-
-                <Text style={styles.label}>Property Information</Text>
-                <TextInput
-                  value={propertyInformation}
-                  onChangeText={setPropertyInformation}
-                  placeholder="Property Information"
                   style={styles.input}
                 />
 
@@ -341,21 +382,24 @@ const Page = () => {
                   style={styles.input}
                 />
 
-                <Text style={styles.label}>Date of Birth</Text>
-                <TextInput
-                  value={dateOfBirth}
-                  onChangeText={setDateOfBirth}
-                  placeholder="Date of Birth"
-                  style={styles.input}
-                />
+                <View style={styles.dateRow}>
+                  <Text style={styles.label}>Date of Birth</Text>
+                  <DateTimePicker
+                    value={membershipExpiry}
+                    mode="date"
+                    onChange={(_, selectedDate) =>
+                      setDateOfBirth(selectedDate!)
+                    }
+                  />
+                </View>
 
                 <Text style={styles.label}>Gender</Text>
-                <TextInput
-                  value={gender}
-                  onChangeText={setGender}
-                  placeholder="Gender"
+                <TouchableOpacity
+                  onPress={() => setIsGenderModalVisible(true)}
                   style={styles.input}
-                />
+                >
+                  <Text style={{marginTop: 4}}>{gender}</Text>
+                </TouchableOpacity>
 
                 <Text style={styles.label}>Race</Text>
                 <TextInput
@@ -392,6 +436,38 @@ const Page = () => {
               </ScrollView>
             )}
           </View>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isGenderModalVisible}
+            onRequestClose={() => {
+              setIsGenderModalVisible(!isGenderModalVisible);
+            }}
+          >
+            <View style={styles.bottomModalView}>
+              <View style={styles.bottomSheet}>
+                <Text style={styles.bottomSheetTitle}>Select Gender</Text>
+                <Pressable
+                  onPress={() => {
+                    setGender("Male");
+                    setIsGenderModalVisible(!isGenderModalVisible);
+                  }}
+                  style={styles.bottomSheetButton}
+                >
+                  <Text>Male</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setGender("Female");
+                    setIsGenderModalVisible(!isGenderModalVisible);
+                  }}
+                  style={styles.bottomSheetButton}
+                >
+                  <Text>Female</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
         </View>
       )}
     </SafeAreaView>
@@ -454,7 +530,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     gap: 8,
   },
-
   input: {
     borderWidth: 1,
     borderColor: "black",
@@ -475,6 +550,35 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 2,
     marginRight: 8,
+  },
+  bottomModalView: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)", // Optional: for dimming background
+  },
+  bottomSheet: {
+    backgroundColor: "white",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderTopRightRadius: 20,
+    borderTopLeftRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  bottomSheetTitle: {
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  bottomSheetButton: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
   },
 });
 
