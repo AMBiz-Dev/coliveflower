@@ -244,7 +244,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 26,
   },
-
   seperatorView: {
     flexDirection: "row",
     gap: 10,

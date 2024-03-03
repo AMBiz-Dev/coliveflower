@@ -69,6 +69,7 @@ function RootLayoutNav() {
   // Automatically open login if user is not authenticated
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
+      console.log("User not signed in!")
       router.push("/(modals)/login");
     }
   }, [isLoaded]);

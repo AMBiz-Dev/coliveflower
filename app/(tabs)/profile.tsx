@@ -13,19 +13,28 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
 import { defaultStyles } from "@/constants/Styles";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/Colors";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 
 const Page = () => {
-  const { signOut, isSignedIn } = useAuth();
+  const { isLoaded, signOut, isSignedIn } = useAuth();
   const { user } = useUser();
   const [firstName, setFirstName] = useState(user?.firstName);
   const [lastName, setLastName] = useState(user?.lastName);
   const [edit, setEdit] = useState(false);
+  const router = useRouter();
+
+  // Automatically open login if user is not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      console.log("Profile -> Login: User not signed in!");
+      router.push("/(modals)/login");
+    }
+  }, [isLoaded]);
 
   const getDefaultDOB = () => {
     const date = new Date();
@@ -85,8 +94,12 @@ const Page = () => {
       getDateFromString(user?.unsafeMetadata?.membershipExpiry)
     );
     setPropertyAddress((user?.unsafeMetadata?.propertyAddress || "") as string);
-    setBookingFee((user?.unsafeMetadata?.bookingFee?.toString() || "0") as string);
-    setSecurityDeposit((user?.unsafeMetadata?.securityDeposit?.toString() || "0") as string);
+    setBookingFee(
+      (user?.unsafeMetadata?.bookingFee?.toString() || "0") as string
+    );
+    setSecurityDeposit(
+      (user?.unsafeMetadata?.securityDeposit?.toString() || "0") as string
+    );
     setMembershipTier((user?.unsafeMetadata?.membershipTier || "") as string);
     setPaymentInformation(
       (user?.unsafeMetadata?.paymentInformation || "") as string
@@ -105,20 +118,6 @@ const Page = () => {
     setOccupation((user?.unsafeMetadata?.occupation || "") as string);
     setMobileNumber((user?.unsafeMetadata?.mobileNumber || "") as string);
   }, [user]);
-
-  // Update Clerk user data
-  const onSaveUser = async () => {
-    try {
-      await user?.update({
-        firstName: firstName!,
-        lastName: lastName!,
-      });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setEdit(false);
-    }
-  };
 
   // Capture image from camera roll
   // Upload to Clerk as avatar
@@ -228,18 +227,50 @@ const Page = () => {
         },
       });
     } catch (error) {
-      console.log(error)
-
+      console.log(error);
     } finally {
       setEdit(false);
     }
+  };
+
+  const login = () => {
+    router.push("/(modals)/login");
   };
 
   return (
     <SafeAreaView style={defaultStyles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.header}>Profile</Text>
-        <Ionicons name="notifications-outline" size={26} />
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          {isSignedIn ? (
+            <TouchableOpacity
+              style={{
+                outlineColor: "black",
+                borderRadius: 12,
+                borderColor: "black",
+                borderWidth: 2,
+                paddingHorizontal: 4,
+              }}
+              onPress={() => signOut()}
+            >
+              <Text style={{ textAlignVertical: "center" }}>Sign Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={{
+                outlineColor: "black",
+                borderRadius: 12,
+                borderColor: "black",
+                borderWidth: 2,
+                paddingHorizontal: 4,
+              }}
+              onPress={login}
+            >
+              <Text style={{ textAlignVertical: "center" }}>Login</Text>
+            </TouchableOpacity>
+          )}
+          <Ionicons style={{marginLeft: 4}} name="notifications-outline" size={26} />
+        </View>
       </View>
 
       {user && (
@@ -254,6 +285,13 @@ const Page = () => {
               />
             </TouchableOpacity>
           )}
+          {isSignedIn ? (
+            <View style={{ position: "absolute", top: 8, right: 16 }}>
+              <Text>
+                {(user?.unsafeMetadata?.access as string) ?? "Member"}
+              </Text>
+            </View>
+          ) : null}
           <TouchableOpacity onPress={onCaptureImage}>
             <Image source={{ uri: user?.imageUrl }} style={styles.avatar} />
           </TouchableOpacity>
@@ -327,7 +365,7 @@ const Page = () => {
 
                 <Text style={styles.label}>Booking Fee</Text>
                 <TextInput
-                  value={(bookingFee as string)}
+                  value={bookingFee as string}
                   keyboardType="numeric"
                   onChangeText={setBookingFee}
                   placeholder="Booking Fee"
@@ -336,7 +374,7 @@ const Page = () => {
 
                 <Text style={styles.label}>Security Deposit</Text>
                 <TextInput
-                  value={(securityDeposit as string)}
+                  value={securityDeposit as string}
                   onChangeText={setSecurityDeposit}
                   placeholder="Security Deposit"
                   style={styles.input}
@@ -398,7 +436,7 @@ const Page = () => {
                   onPress={() => setIsGenderModalVisible(true)}
                   style={styles.input}
                 >
-                  <Text style={{marginTop: 4}}>{gender}</Text>
+                  <Text style={{ marginTop: 4 }}>{gender}</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.label}>Race</Text>
